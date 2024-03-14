@@ -26,6 +26,7 @@ else:
 # Parse command line arguments
 parser = argparse.ArgumentParser(description="PyTorch Tiny ImageNet Training")
 parser.add_argument("--arch", default="resnet", help="model architecture")
+parser.add_argument("--batch_size", type=int, default=32, help="batch size for training")
 args = parser.parse_args()
 
 data_dir = "tiny-224/"
@@ -52,15 +53,20 @@ data_transforms = {
         ]
     ),
 }
+
+print(f"batch size: {args.batch_size}")
+
 image_datasets = {
     x: datasets.ImageFolder(os.path.join(data_dir, x), data_transforms[x]) for x in ["train", "val", "test"]
 }
 dataloaders = {
-    x: data.DataLoader(image_datasets[x], batch_size=32, shuffle=True, num_workers=num_workers[x])
+    x: data.DataLoader(image_datasets[x], batch_size=args.batch_size, shuffle=True, num_workers=num_workers[x])
     for x in ["train", "val", "test"]
 }
 
 print(f"architecture: {args.arch}")
+
+exit()
 
 if(args.arch == "resnet"):
     model_ft = models.resnet50(weights="IMAGENET1K_V1")
