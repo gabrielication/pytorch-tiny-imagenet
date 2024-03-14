@@ -110,7 +110,7 @@ optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
 
 # Train
 best_epoch = train_model(
-    output_path="vgg16_224",
+    output_path=f"{args.arch}_224",
     model=model_ft,
     dataloaders=dataloaders,
     criterion=criterion,
@@ -120,7 +120,7 @@ best_epoch = train_model(
 )
 
 # Test
-model_ft.load_state_dict(torch.load(f"models/vgg16_224/model_{best_epoch}_epoch.pt"))
+model_ft.load_state_dict(torch.load(f"models/{args.arch}_224/model_{best_epoch}_epoch.pt"))
 test_model(model=model_ft, dataloaders=dataloaders, criterion=criterion, device=device)
 
 
