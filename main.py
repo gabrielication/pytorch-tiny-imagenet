@@ -64,63 +64,67 @@ dataloaders = {
     for x in ["train", "val", "test"]
 }
 
-print(f"architecture: {args.arch}")
+archs = ["vgg16", "vgg19", "resnet"]
 
-if(args.arch == "resnet"):
-    model_ft = models.resnet50(weights="IMAGENET1K_V1")
-    # Finetune Final few layers to adjust for tiny imagenet input
-    model_ft.avgpool = nn.AdaptiveAvgPool2d(1)
-    num_features = model_ft.fc.in_features
-    model_ft.fc = nn.Linear(num_features, 200)
+for arch in archs:
     
-elif(args.arch == "vgg16"):
-    # Load VGG16
-
-    model_ft = models.vgg16_bn(weights=VGG16_BN_Weights.IMAGENET1K_V1)
-
-    # Number of features in the input tensor to the classifier's first linear layer
-    num_features = model_ft.classifier[0].in_features 
-
-    # Adjust the classifier for Tiny ImageNet (200 classes) and be more compact like previous models
-    model_ft.classifier = nn.Sequential(
-        nn.Linear(num_features, 200),
-    )
+    print(f"architecture: {arch}")
     
-elif(args.arch == "vgg19"):
-    # Load VGG19
-    model_ft = models.vgg19_bn(weights=VGG19_BN_Weights.IMAGENET1K_V1)
+    if(arch == "resnet"):
+        model_ft = models.resnet50(weights="IMAGENET1K_V1")
+        # Finetune Final few layers to adjust for tiny imagenet input
+        model_ft.avgpool = nn.AdaptiveAvgPool2d(1)
+        num_features = model_ft.fc.in_features
+        model_ft.fc = nn.Linear(num_features, 200)
+        
+    elif(arch == "vgg16"):
+        # Load VGG16
 
-    # Number of features in the input tensor to the classifier's first linear layer
-    num_features = model_ft.classifier[0].in_features 
+        model_ft = models.vgg16_bn(weights=VGG16_BN_Weights.IMAGENET1K_V1)
 
-    # Adjust the classifier for Tiny ImageNet (200 classes) and be more compact like previous models
-    model_ft.classifier = nn.Sequential(
-        nn.Linear(num_features, 200),
+        # Number of features in the input tensor to the classifier's first linear layer
+        num_features = model_ft.classifier[0].in_features 
+
+        # Adjust the classifier for Tiny ImageNet (200 classes) and be more compact like previous models
+        model_ft.classifier = nn.Sequential(
+            nn.Linear(num_features, 200),
+        )
+        
+    elif(arch == "vgg19"):
+        # Load VGG19
+        model_ft = models.vgg19_bn(weights=VGG19_BN_Weights.IMAGENET1K_V1)
+
+        # Number of features in the input tensor to the classifier's first linear layer
+        num_features = model_ft.classifier[0].in_features 
+
+        # Adjust the classifier for Tiny ImageNet (200 classes) and be more compact like previous models
+        model_ft.classifier = nn.Sequential(
+            nn.Linear(num_features, 200),
+        )
+    else:
+        print("Invalid model architecture")
+        exit()
+
+    model_ft = model_ft.to(device)
+
+    # Loss Function
+    criterion = nn.CrossEntropyLoss()
+    # Observe that all parameters are being optimized
+    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
+
+    # Train
+    best_epoch = train_model(
+        output_path=f"{arch}_224",
+        model=model_ft,
+        dataloaders=dataloaders,
+        criterion=criterion,
+        optimizer=optimizer_ft,
+        device=device,
+        num_epochs=10,
     )
-else:
-    print("Invalid model architecture")
-    exit()
 
-model_ft = model_ft.to(device)
-
-# Loss Function
-criterion = nn.CrossEntropyLoss()
-# Observe that all parameters are being optimized
-optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
-
-# Train
-best_epoch = train_model(
-    output_path=f"{args.arch}_224",
-    model=model_ft,
-    dataloaders=dataloaders,
-    criterion=criterion,
-    optimizer=optimizer_ft,
-    device=device,
-    num_epochs=10,
-)
-
-# Test
-model_ft.load_state_dict(torch.load(f"models/{args.arch}_224/model_{best_epoch}_epoch.pt"))
-test_model(model=model_ft, dataloaders=dataloaders, criterion=criterion, device=device)
+    # Test
+    model_ft.load_state_dict(torch.load(f"models/{arch}_224/model_{best_epoch}_epoch.pt"))
+    test_model(model=model_ft, dataloaders=dataloaders, criterion=criterion, device=device)
 
 
