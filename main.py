@@ -66,8 +66,6 @@ dataloaders = {
 
 print(f"architecture: {args.arch}")
 
-exit()
-
 if(args.arch == "resnet"):
     model_ft = models.resnet50(weights="IMAGENET1K_V1")
     # Finetune Final few layers to adjust for tiny imagenet input
