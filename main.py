@@ -7,11 +7,14 @@ import torch.optim as optim
 import torch.utils.data as data
 import torchvision.datasets as datasets
 import torchvision.models as models
+from torchvision.models.vgg import VGG16_BN_Weights, VGG19_BN_Weights
 import torchvision.transforms as transforms
 
 from test_model import test_model
 from train_model import train_model
+import argparse
 
+torch.manual_seed(42)
 
 if torch.cuda.is_available():
     device = "cuda:0"
@@ -19,6 +22,11 @@ elif torch.backends.mps.is_built():
     device = torch.device("mps")
 else:
     device = "cpu"
+    
+# Parse command line arguments
+parser = argparse.ArgumentParser(description="PyTorch Tiny ImageNet Training")
+parser.add_argument("--arch", default="resnet", help="model architecture")
+args = parser.parse_args()
 
 data_dir = "tiny-224/"
 num_workers = {"train": 4, "val": 0, "test": 0}
@@ -52,13 +60,43 @@ dataloaders = {
     for x in ["train", "val", "test"]
 }
 
-# Load Resnet18
-torch.manual_seed(42)
-model_ft = models.resnet50(weights="IMAGENET1K_V1")
-# Finetune Final few layers to adjust for tiny imagenet input
-model_ft.avgpool = nn.AdaptiveAvgPool2d(1)
-num_features = model_ft.fc.in_features
-model_ft.fc = nn.Linear(num_features, 200)
+print(f"architecture: {args.arch}")
+
+if(args.arch == "resnet"):
+    model_ft = models.resnet50(weights="IMAGENET1K_V1")
+    # Finetune Final few layers to adjust for tiny imagenet input
+    model_ft.avgpool = nn.AdaptiveAvgPool2d(1)
+    num_features = model_ft.fc.in_features
+    model_ft.fc = nn.Linear(num_features, 200)
+    
+elif(args.arch == "vgg16"):
+    # Load VGG16
+
+    model_ft = models.vgg16_bn(weights=VGG16_BN_Weights.IMAGENET1K_V1)
+
+    # Number of features in the input tensor to the classifier's first linear layer
+    num_features = model_ft.classifier[0].in_features 
+
+    # Adjust the classifier for Tiny ImageNet (200 classes) and be more compact like previous models
+    model_ft.classifier = nn.Sequential(
+        nn.Linear(num_features, 200),
+    )
+    
+elif(args.arch == "vgg19"):
+    # Load VGG19
+    model_ft = models.vgg19_bn(weights=VGG19_BN_Weights.IMAGENET1K_V1)
+
+    # Number of features in the input tensor to the classifier's first linear layer
+    num_features = model_ft.classifier[0].in_features 
+
+    # Adjust the classifier for Tiny ImageNet (200 classes) and be more compact like previous models
+    model_ft.classifier = nn.Sequential(
+        nn.Linear(num_features, 200),
+    )
+else:
+    print("Invalid model architecture")
+    exit()
+
 model_ft = model_ft.to(device)
 
 # Loss Function
@@ -68,7 +106,7 @@ optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
 
 # Train
 best_epoch = train_model(
-    output_path="RestNet50_224",
+    output_path="vgg16_224",
     model=model_ft,
     dataloaders=dataloaders,
     criterion=criterion,
@@ -78,7 +116,7 @@ best_epoch = train_model(
 )
 
 # Test
-model_ft.load_state_dict(torch.load(f"models/RestNet50_224/model_{best_epoch}_epoch.pt"))
+model_ft.load_state_dict(torch.load(f"models/vgg16_224/model_{best_epoch}_epoch.pt"))
 test_model(model=model_ft, dataloaders=dataloaders, criterion=criterion, device=device)
 
 
