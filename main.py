@@ -23,6 +23,8 @@ elif torch.backends.mps.is_built():
 else:
     device = "cpu"
     
+print(f"device: {device}")
+    
 # Parse command line arguments
 parser = argparse.ArgumentParser(description="PyTorch Tiny ImageNet Training")
 parser.add_argument("--batch_size", type=int, default=32, help="batch size for training")
@@ -63,7 +65,7 @@ dataloaders = {
     for x in ["train", "val", "test"]
 }
 
-archs = ["vgg16", "vgg19"]
+archs = ["vgg16", "vgg19", "resnet"]
 
 for arch in archs:
     
