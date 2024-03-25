@@ -25,7 +25,6 @@ else:
     
 # Parse command line arguments
 parser = argparse.ArgumentParser(description="PyTorch Tiny ImageNet Training")
-parser.add_argument("--arch", default="resnet", help="model architecture")
 parser.add_argument("--batch_size", type=int, default=32, help="batch size for training")
 args = parser.parse_args()
 
@@ -64,43 +63,58 @@ dataloaders = {
     for x in ["train", "val", "test"]
 }
 
-archs = ["vgg16", "vgg19", "resnet"]
+archs = ["vgg16", "vgg19"]
 
 for arch in archs:
     
     print(f"architecture: {arch}")
     
     if(arch == "resnet"):
-        model_ft = models.resnet50(weights="IMAGENET1K_V1")
-        # Finetune Final few layers to adjust for tiny imagenet input
-        model_ft.avgpool = nn.AdaptiveAvgPool2d(1)
-        num_features = model_ft.fc.in_features
-        model_ft.fc = nn.Linear(num_features, 200)
-        
+        print("currently not supported")
+        continue
+    
+        # model_ft = models.resnet50(weights="IMAGENET1K_V1")
+        # # Finetune Final few layers to adjust for tiny imagenet input
+        # model_ft.avgpool = nn.AdaptiveAvgPool2d(1)
+        # num_features = model_ft.fc.in_features
+        # model_ft.fc = nn.Linear(num_features, 200)
     elif(arch == "vgg16"):
         # Load VGG16
+        model = models.vgg16_bn(weights=VGG16_BN_Weights.IMAGENET1K_V1)
+            
+        # Clone the features of the original model (convolutional layers)
+        features = model.features
 
-        model_ft = models.vgg16_bn(weights=VGG16_BN_Weights.IMAGENET1K_V1)
-
-        # Number of features in the input tensor to the classifier's first linear layer
-        num_features = model_ft.classifier[0].in_features 
-
-        # Adjust the classifier for Tiny ImageNet (200 classes) and be more compact like previous models
-        model_ft.classifier = nn.Sequential(
-            nn.Linear(num_features, 200),
-        )
+        # Here, we use AdaptiveAvgPool2d to achieve a similar effect.
+        avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        
+        # The output features is the number of classes for your task.
+        classifier = nn.Linear(512, 200)
+        
+        # Update the original model with the modified avgpool and classifier
+        model.avgpool = avgpool
+        model.classifier = classifier
+        
+        model_ft = model
         
     elif(arch == "vgg19"):
         # Load VGG19
-        model_ft = models.vgg19_bn(weights=VGG19_BN_Weights.IMAGENET1K_V1)
+        model = models.vgg19_bn(weights=VGG16_BN_Weights.IMAGENET1K_V1)
+            
+        # Clone the features of the original model (convolutional layers)
+        features = model.features
 
-        # Number of features in the input tensor to the classifier's first linear layer
-        num_features = model_ft.classifier[0].in_features 
-
-        # Adjust the classifier for Tiny ImageNet (200 classes) and be more compact like previous models
-        model_ft.classifier = nn.Sequential(
-            nn.Linear(num_features, 200),
-        )
+        # Here, we use AdaptiveAvgPool2d to achieve a similar effect.
+        avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        
+        # The output features is the number of classes for your task.
+        classifier = nn.Linear(512, 200)
+        
+        # Update the original model with the modified avgpool and classifier
+        model.avgpool = avgpool
+        model.classifier = classifier
+        
+        model_ft = model
     else:
         print("Invalid model architecture")
         exit()
@@ -120,7 +134,7 @@ for arch in archs:
         criterion=criterion,
         optimizer=optimizer_ft,
         device=device,
-        num_epochs=10,
+        num_epochs=200,
     )
 
     # Test
