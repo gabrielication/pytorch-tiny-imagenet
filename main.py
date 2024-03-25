@@ -18,10 +18,20 @@ torch.manual_seed(42)
 
 if torch.cuda.is_available():
     device = "cuda:0"
+    num_gpus = torch.cuda.device_count()
 elif torch.backends.mps.is_built():
     device = torch.device("mps")
+    num_gpus = 1
 else:
     device = "cpu"
+    num_gpus = 0
+
+if num_gpus > 1:
+    print(f"Using {num_gpus} GPUs.")
+elif num_gpus == 1:
+    print("Using 1 GPU.")
+else:
+    print("CUDA is not available. Using CPU.")
     
 print(f"device: {device}")
     
@@ -121,10 +131,9 @@ for arch in archs:
         model.classifier = classifier
         
         model_ft = model
-    else:
-        print("Invalid model architecture")
-        exit()
 
+    if num_gpus > 1:
+        model_ft = nn.DataParallel(model_ft)
     model_ft = model_ft.to(device)
 
     # Loss Function
