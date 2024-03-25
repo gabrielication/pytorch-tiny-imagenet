@@ -27,6 +27,7 @@ print(f"device: {device}")
     
 # Parse command line arguments
 parser = argparse.ArgumentParser(description="PyTorch Tiny ImageNet Training")
+parser.add_argument("--arch", type=str, default=None, choices=["vgg16", "vgg19", "resnet"], help="model architecture (default: vgg16)")
 parser.add_argument("--batch_size", type=int, default=32, help="batch size for training")
 args = parser.parse_args()
 
@@ -65,7 +66,10 @@ dataloaders = {
     for x in ["train", "val", "test"]
 }
 
-archs = ["vgg16", "vgg19", "resnet"]
+if args.arch:
+    archs = [args.arch]
+else:
+    archs = ["vgg16", "vgg19", "resnet"]
 
 for arch in archs:
     
@@ -101,7 +105,7 @@ for arch in archs:
         
     elif(arch == "vgg19"):
         # Load VGG19
-        model = models.vgg19_bn(weights=VGG16_BN_Weights.IMAGENET1K_V1)
+        model = models.vgg19_bn(weights=VGG19_BN_Weights.IMAGENET1K_V1)
             
         # Clone the features of the original model (convolutional layers)
         features = model.features
