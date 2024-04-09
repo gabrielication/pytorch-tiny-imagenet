@@ -84,6 +84,8 @@ def main():
         archs = [args.arch]
     else:
         archs = ["vgg16", "vgg19", "resnet"]
+        
+    best_weights = []
 
     for arch in archs:
         
@@ -160,10 +162,18 @@ def main():
             num_epochs=args.epochs,
         )
 
+        best_weight = f"models/{arch}_224/model_{best_epoch}_epoch.pt"
+        best_weights.append(best_weight)
+        
         # Test
-        model_ft.load_state_dict(torch.load(f"models/{arch}_224/model_{best_epoch}_epoch.pt"))
+        model_ft.load_state_dict(torch.load(best_weight))
         test_model(model=model_ft, dataloaders=dataloaders, criterion=criterion, device=device)
 
+    # Create a text file to store the best weights
+    with open("best_weights.txt", "w") as file:
+        # Write each best weight on a new line
+        for weight in best_weights:
+            file.write(weight + "\n")
 
 if __name__ == '__main__':
     freeze_support()
