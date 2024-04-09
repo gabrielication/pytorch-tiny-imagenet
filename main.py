@@ -92,14 +92,11 @@ def main():
         print(f"architecture: {arch}")
         
         if(arch == "resnet"):
-            print("currently not supported")
-            continue
-        
-            # model_ft = models.resnet50(weights="IMAGENET1K_V1")
-            # # Finetune Final few layers to adjust for tiny imagenet input
-            # model_ft.avgpool = nn.AdaptiveAvgPool2d(1)
-            # num_features = model_ft.fc.in_features
-            # model_ft.fc = nn.Linear(num_features, 200)
+            model_ft = models.resnet50(weights="IMAGENET1K_V1")
+            # Finetune Final few layers to adjust for tiny imagenet input
+            model_ft.avgpool = nn.AdaptiveAvgPool2d(1)
+            num_features = model_ft.fc.in_features
+            model_ft.fc = nn.Linear(num_features, 200)
         elif(arch == "vgg16"):
             # Load VGG16
             model = models.vgg16_bn(weights=VGG16_BN_Weights.IMAGENET1K_V1)
@@ -124,8 +121,7 @@ def main():
         elif(arch == "vgg19"):
             # Load VGG19
             model = models.vgg19_bn(weights=VGG19_BN_Weights.IMAGENET1K_V1)
-            
-            print(model)
+
             model.avgpool = nn.AdaptiveAvgPool2d((1, 1))
 
             # The output of AdaptiveAvgPool2d will be a fixed size (512 x 1 x 1)
@@ -141,6 +137,8 @@ def main():
                 nn.Dropout(0.5),
                 nn.Linear(4096, 200)  # Assuming 200 classes for Tiny ImageNet
             )
+            
+            model_ft = model
 
         if num_gpus > 1:
             model_ft = nn.DataParallel(model_ft)
