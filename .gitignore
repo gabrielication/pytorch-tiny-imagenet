@@ -1,7 +1,5 @@
 models
-tiny-224
-tiny-imagenet-200
-tiny-imagenet-200.zip
+tiny-*
 *.zip
 __pycache__
 .*
